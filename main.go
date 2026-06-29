@@ -29,7 +29,7 @@ func generateShortUrl(OriginalUrl string) string {
 	hash := hex.EncodeToString(data)
 	fmt.Println("hash = ", hash)
 	fmt.Println("FinalHash = ", hash[:8])
-	return "Done"
+	return hash[:8]
 }
 
 func createUrl(Original_url string) string {
@@ -53,24 +53,31 @@ func getUrl(id string)(URL,error){
 }
 
 //this function handles the "/" page
-func handler(w http.ResponseWriter, r *http.Request){
+func RootpageHandler(w http.ResponseWriter, r *http.Request){
 	fmt.Println("GET Method")
 	fmt.Fprintf(w, "Hello / Route")
 }
 
 func ShortUrlHandler(w http.ResponseWriter, r *http.Request){
 	var data struct{
-		URL string `json:"Url"`
+		URL string `json:"url"`
 	}
 
-	err:=json.NewDecoder(r.Body).Decode(data)
+	err:=json.NewDecoder(r.Body).Decode(&data)
 	if(err!=nil){
 		http.Error(w,"Invalid Request Body",http.StatusBadRequest)
 		return 
 	}
 
-	shortUrl:=createUrl(data.URL)
-	fmt.Fprintf(w,shortUrl)
+	shortUrl_:=createUrl(data.URL)
+	response:=struct{
+		ShortUrl string `json:"short_url"`
+	}{
+		ShortUrl: shortUrl_,
+	}
+
+	w.Header().Set("Content-Type","application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func main() {
@@ -79,9 +86,10 @@ func main() {
 	//generateShortUrl(OriginalUrl)
 
 	//register a handle function to handle arr request to root URL ("/")
-	http.HandleFunc("/",handler)
+	http.HandleFunc("/",RootpageHandler)
+	http.HandleFunc("/short",ShortUrlHandler)
 
-	//start HTTP server on port 3000
+	//start HTTP server on port 3000 
 	fmt.Println("Server starting on port 3000...")
 	err :=http.ListenAndServe(":3000",nil)
 	if(err!=nil){
