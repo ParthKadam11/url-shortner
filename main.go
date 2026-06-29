@@ -86,6 +86,7 @@ func RedirectUrl(w http.ResponseWriter, r *http.Request){
 	url,err:=getUrl(id)
 	if(err!=nil){
 		http.Error(w,"Invalid Request", http.StatusNotFound)
+		return
 	}
 
 	http.Redirect(w,r,url.OriginalUrl,http.StatusFound)
@@ -97,8 +98,10 @@ func main() {
 	//generateShortUrl(OriginalUrl)
 
 	//register a handle function to handle arr request to root URL ("/")
-	http.HandleFunc("/",RootpageHandler)
-	http.HandleFunc("/short",ShortUrlHandler)
+	http.HandleFunc("GET /{$}",RootpageHandler)
+	http.HandleFunc("POST /short",ShortUrlHandler)
+	http.HandleFunc("GET /redirect/{id}",RedirectUrl)
+	http.HandleFunc("GET /redirect/", RedirectUrl)  
 
 	//start HTTP server on port 3000 
 	fmt.Println("Server starting on port 3000...")
